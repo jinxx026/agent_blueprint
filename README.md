@@ -94,17 +94,6 @@ macOS / Linux：
 - RAG 文档按组织、知识源和允许角色过滤。
 - 高风险工具需要确定性 Policy 与人工审批，不能交给模型自行决定。
 
-## 上传 GitHub
 
-交付压缩包已经排除 `.git`、`.venv`、`node_modules`、构建缓存、本地数据库和环境密钥。解压后可以直接作为新仓库根目录：
-
-```bash
-git init
-git add .
-git commit -m "Initial AgentBlueprint platform"
-git branch -M main
-git remote add origin <YOUR_GITHUB_REPOSITORY_URL>
-git push -u origin main
-```
 
 更详细的设计见 `docs/architecture.md`、`docs/enterprise-platform-design.md` 和 `docs/blueprint-spec.md`。
