@@ -204,7 +204,7 @@ LangGraph StateGraph
 
 ## 8. 计划技术栈
 
-- Web：React、TypeScript。
+- Web：当前 MVP 使用 Streamlit，使前后端统一为 Python；成熟流程画布再独立升级。
 - API：Python、FastAPI、Pydantic。
 - 数据库：PostgreSQL，向量检索使用 pgvector。
 - 异步任务：Redis 与任务队列。

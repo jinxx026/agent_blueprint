@@ -22,7 +22,7 @@ Policy / Approval / Evaluation 控制执行与发布
 - 多 Agent：LangChain 抽象和 LangGraph 编排。
 - 企业治理：JWT/OIDC 身份、组织隔离、角色权限、工具网关和人工审批。
 - 质量控制：自动评测、发布门禁、版本记录和审计数据。
-- 企业控制台：业务向导、可移动画布、知识库、模块中心、评测和安全设置。
+- Streamlit 企业控制台：业务模块、RAG 配置、知识库、Blueprint、评测发布和安全设置。
 
 当前 SQLite、内存索引和本地模型适配器适合开发验证。生产环境仍需切换 PostgreSQL、持久向量库、对象存储、模型网关和正式 OIDC/SSO。
 
@@ -35,11 +35,11 @@ AgentBlueprint/
 │   ├── tests/               端到端和单元测试
 │   ├── pyproject.toml       Python 依赖与质量工具配置
 │   └── .env.example         后端环境变量示例
-├── frontend/                企业控制台
-│   ├── app/                 页面与路由
-│   ├── components/          画布和通用界面组件
-│   ├── lib/                 API 客户端与 Blueprint 示例
-│   └── .env.example         前端环境变量示例
+├── frontend/                Streamlit 企业控制台
+│   ├── app.py               前端入口、导航和全局样式
+│   ├── api_client.py        FastAPI 请求与错误处理
+│   ├── views/               模块、知识、蓝图、评测和安全页面
+│   └── .streamlit/          非敏感主题设置
 ├── examples/                可运行的蓝图和评测案例
 ├── docs/                    架构、规范和决策记录
 ├── scripts/                 一键安装、启动和检查脚本
@@ -49,7 +49,7 @@ AgentBlueprint/
 
 ## 快速开始
 
-环境要求：Python 3.11+、Node.js 22+、npm。
+环境要求：Python 3.11+。前后端共用 Python 环境，不需要 Node.js。
 
 Windows PowerShell：
 
@@ -68,7 +68,7 @@ chmod +x scripts/*.sh
 
 启动后访问：
 
-- 前端控制台：http://localhost:3000
+- 前端控制台：http://localhost:8501
 - 后端 API：http://127.0.0.1:8000/api/v1
 - API 文档：http://127.0.0.1:8000/docs
 
@@ -94,6 +94,17 @@ macOS / Linux：
 - RAG 文档按组织、知识源和允许角色过滤。
 - 高风险工具需要确定性 Policy 与人工审批，不能交给模型自行决定。
 
+## 上传 GitHub
 
+交付压缩包已经排除 `.git`、`.venv`、残留依赖目录、构建缓存、本地数据库和环境密钥。解压后可以直接作为新仓库根目录：
+
+```bash
+git init
+git add .
+git commit -m "Initial AgentBlueprint platform"
+git branch -M main
+git remote add origin <YOUR_GITHUB_REPOSITORY_URL>
+git push -u origin main
+```
 
 更详细的设计见 `docs/architecture.md`、`docs/enterprise-platform-design.md` 和 `docs/blueprint-spec.md`。

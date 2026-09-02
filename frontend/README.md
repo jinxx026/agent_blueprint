@@ -1,29 +1,17 @@
-# AgentBlueprint Frontend
+# Streamlit 企业控制台
 
-企业 AI 智能体装配控制台，使用 React、Vinext 和 Tailwind CSS 构建。
+这个目录是 AgentBlueprint 的轻量前端，直接调用 FastAPI，不保存企业密钥或租户身份。
 
-## 页面职责
+## 文件说明
 
-- `app/page.tsx`：业务向导、高级流程画布和测试控制台。
-- `app/modules/page.tsx`：业务模块选择和每个模块的独立 RAG 配置。
-- `app/blueprints/page.tsx`：Blueprint 编辑、保存和版本历史。
-- `app/knowledge/page.tsx`：企业知识录入、角色授权和索引状态。
-- `app/evaluations/page.tsx`：自动评测和发布门禁。
-- `app/security/page.tsx`：当前组织、用户、角色和安全底座。
-- `app/settings/page.tsx`：后端地址与访问令牌。
-- `components/canvas-workspace.tsx`：可拖拽节点和可平移视野的流程画布。
-- `components/studio-shell.tsx`：管理页面的导航、身份和连接状态。
-- `lib/agentblueprint-api.ts`：统一 API 类型、认证头和请求方法。
+- `app.py`：应用入口、侧栏导航、后端地址和全局样式。
+- `api_client.py`：统一发送 HTTP 请求，把后端错误转换成用户能读懂的提示。
+- `views/dashboard.py`：产品总览和完整运行链路。
+- `views/modules.py`：业务模块选择与模块级 RAG 参数配置。
+- `views/knowledge.py`：企业知识文本导入和角色权限设置。
+- `views/blueprints.py`：Blueprint YAML 编辑、校验、编译和版本保存。
+- `views/evaluations.py`：门禁测试、历史结果和受控发布。
+- `views/security.py`：当前组织身份和生产安全边界说明。
+- `.streamlit/config.toml`：颜色、主题和本地服务设置，不存放秘密。
 
-## 本地启动
-
-建议从仓库根目录运行 `scripts/dev.ps1` 或 `scripts/dev.sh`。单独启动时：
-
-```powershell
-npm ci
-npm run dev
-```
-
-默认连接 `http://127.0.0.1:8000/api/v1`，可以通过 `.env.local` 中的 `NEXT_PUBLIC_AGENTBLUEPRINT_API_URL` 修改。
-
-线上环境必须使用 HTTPS 后端；模型和企业系统密钥只能保存在后端。
+从仓库根目录运行 `scripts/dev.ps1`（Windows）或 `scripts/dev.sh`（macOS/Linux），然后访问 `http://localhost:8501`。

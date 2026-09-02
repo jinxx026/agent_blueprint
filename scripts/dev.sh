@@ -7,5 +7,5 @@ cd "$project_root/backend"
 backend_pid=$!
 trap 'kill "$backend_pid" 2>/dev/null || true' EXIT INT TERM
 
-cd "$project_root/frontend"
-npm run dev
+cd "$project_root"
+backend/.venv/bin/python -m streamlit run frontend/app.py --server.port 8501

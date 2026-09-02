@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $BackendRoot = Join-Path $ProjectRoot 'backend'
-$FrontendRoot = Join-Path $ProjectRoot 'frontend'
+$FrontendEntry = Join-Path $ProjectRoot 'frontend\app.py'
 $BackendPython = Join-Path $BackendRoot '.venv\Scripts\python.exe'
 
 if (-not (Test-Path $BackendPython)) {
@@ -13,8 +13,8 @@ $Backend = Start-Process -FilePath $BackendPython `
     -WorkingDirectory $BackendRoot -WindowStyle Hidden -PassThru
 
 try {
-    Set-Location $FrontendRoot
-    npm run dev
+    Set-Location $ProjectRoot
+    & $BackendPython -m streamlit run $FrontendEntry --server.port 8501
 }
 finally {
     if (-not $Backend.HasExited) {
