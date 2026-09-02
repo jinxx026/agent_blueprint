@@ -1,0 +1,39 @@
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+.next/
+.vinext/
+.wrangler/
+out/
+work/
+outputs/
+next-env.d.ts
+coverage/
+
+# Runtime data must not enter source control
+data/
+uploads/
+*.db
+*.sqlite3
+*.zip
+*.tar.gz
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,241 @@
+api_version: agentblueprint.dev/v0.1
+kind: AgentBlueprint
+
+metadata:
+  name: customer-refund-assistant
+  display_name: 售后退款助理
+  version: 0.1.0
+  description: 依据售后政策和订单事实，为客服生成退款处理建议并安全创建退款草稿。
+  labels:
+    department: customer-service
+    scenario: refund
+
+spec:
+  identity:
+    role: 售后退款助理
+    goal: 在确认客户身份和订单事实后，依据有效售后政策给出可追溯的退款处理建议。
+    responsibilities:
+      - 收集处理退款所需的订单号和客户身份信息
+      - 查询订单事实和当前有效的售后政策
+      - 解释适用条款并生成处理建议
+      - 在符合权限和审批规则时创建退款草稿
+      - 信息不足、政策冲突或超出权限时转交人工
+    prohibited_actions:
+      - 不得自行修改售后政策
+      - 不得承诺政策中不存在的退款权利
+      - 不得在客户身份未验证时披露订单信息
+      - 不得绕过人工审批执行高风险操作
+      - 不得直接执行真实资金退款
+    success_definition:
+      - 所有政策性结论均引用有效售后政策
+      - 工具调用符合当前用户角色和组织边界
+      - 需要审批的退款草稿在批准前保持未执行状态
+      - 无法安全完成时提供明确的人工转交原因
+
+  audience:
+    allowed_roles:
+      - customer_service
+      - supervisor
+    default_language: zh-CN
+
+  knowledge:
+    - id: after_sales_policy
+      type: documents
+      description: 当前有效的退换货政策、例外条款和处理时限
+      source_ref: knowledge://customer-service/after-sales-policy
+      allowed_roles:
+        - customer_service
+        - supervisor
+      citation_required: true
+      freshness: 24h
+
+    - id: product_catalog
+      type: database
+      description: 产品类别、是否支持退货及特殊商品属性
+      source_ref: datasource://commerce/product-catalog
+      allowed_roles:
+        - customer_service
+        - supervisor
+      citation_required: true
+      freshness: 1h
+
+  rag:
+    enabled: true
+    strategy: agentic
+    default_top_k: 6
+    rerank: true
+    return_citations: true
+
+  tools:
+    - id: verify_customer_identity
+      description: 使用订单号和客户提供的验证信息确认其是否为订单所有者
+      connector_ref: connector://commerce/orders
+      operation: verify_customer_identity
+      effect: read
+      risk: medium
+      allowed_roles:
+        - customer_service
+        - supervisor
+      input_schema:
+        type: object
+        required:
+          - order_id
+          - verification_code
+        properties:
+          order_id:
+            type: string
+          verification_code:
+            type: string
+            minLength: 4
+      idempotency_required: false
+      approval_policy: null
+
+    - id: get_order
+      description: 在身份验证通过后查询订单金额、商品、支付和履约状态
+      connector_ref: connector://commerce/orders
+      operation: get_order
+      effect: read
+      risk: medium
+      allowed_roles:
+        - customer_service
+        - supervisor
+      input_schema:
+        type: object
+        required:
+          - order_id
+        properties:
+          order_id:
+            type: string
+      idempotency_required: false
+      approval_policy: null
+
+    - id: create_refund_draft
+      description: 创建退款草稿，不直接触发资金退款
+      connector_ref: connector://commerce/refunds
+      operation: create_refund_draft
+      effect: write
+      risk: high
+      allowed_roles:
+        - customer_service
+        - supervisor
+      input_schema:
+        type: object
+        required:
+          - order_id
+          - amount
+          - reason
+        properties:
+          order_id:
+            type: string
+          amount:
+            type: number
+            exclusiveMinimum: 0
+          reason:
+            type: string
+            minLength: 5
+      idempotency_required: true
+      approval_policy: supervisor-refund-approval
+
+  agents:
+    - id: supervisor
+      display_name: 售后协调Agent
+      role: 面向客服理解任务、分派专业工作并汇总最终处理建议
+      goal: 在最小权限和完整证据基础上协调退款处理
+      knowledge: []
+      tools: []
+      can_delegate_to:
+        - policy-specialist
+        - order-specialist
+        - refund-specialist
+
+    - id: policy-specialist
+      display_name: 售后政策Agent
+      role: 检索并解释当前有效售后政策
+      goal: 返回包含引用的政策适用结论
+      knowledge:
+        - after_sales_policy
+        - product_catalog
+      tools: []
+      can_delegate_to: []
+
+    - id: order-specialist
+      display_name: 订单核验Agent
+      role: 验证客户身份并读取必要订单事实
+      goal: 在身份验证通过后返回最小必要订单信息
+      knowledge: []
+      tools:
+        - verify_customer_identity
+        - get_order
+      can_delegate_to: []
+
+    - id: refund-specialist
+      display_name: 退款执行Agent
+      role: 根据已确认事实请求创建退款草稿
+      goal: 遵守金额、幂等和审批规则创建退款草稿请求
+      knowledge:
+        - after_sales_policy
+      tools:
+        - create_refund_draft
+      can_delegate_to: []
+
+  orchestration:
+    framework: langgraph
+    pattern: supervisor
+    entry_agent: supervisor
+    parallel_delegation: true
+    human_in_the_loop: true
+
+  policies:
+    - id: verified-identity-required
+      description: 查询订单详情和创建退款草稿前必须完成客户身份验证
+      applies_to:
+        - get_order
+        - create_refund_draft
+      rules:
+        - when: customer_identity_verified == true
+          decision: allow
+        - when: customer_identity_verified != true
+          decision: deny
+
+    - id: refund-amount-policy
+      description: 退款草稿始终需要主管审批，超过5000元时转交财务人工处理
+      applies_to:
+        - create_refund_draft
+      rules:
+        - when: amount <= 5000
+          decision: require_approval
+        - when: amount > 5000
+          decision: transfer_to_human
+
+  approvals:
+    - id: supervisor-refund-approval
+      approver_roles:
+        - supervisor
+      expires_after: 24h
+      on_expire: deny
+      require_reason: true
+
+  fallback:
+    missing_information: ask_user
+    conflicting_knowledge: transfer_to_human
+    tool_failure:
+      action: retry
+      max_attempts: 2
+    unsafe_request: deny
+
+  runtime:
+    max_steps: 12
+    timeout_seconds: 120
+    max_model_calls: 8
+    max_tool_calls: 5
+    require_structured_output: true
+
+  evaluation:
+    dataset_ref: ./eval-cases.jsonl
+    minimum_score: 0.90
+    required_checks:
+      - final_answer
+      - citations
+      - tool_trajectory
+      - authorization
+      - approval_behavior
