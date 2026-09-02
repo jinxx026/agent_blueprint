@@ -1,3 +1,0 @@
-# Dependencies used directly by frontend/app.py on Streamlit Community Cloud.
-streamlit>=1.49,<2.0
-httpx>=0.28,<1.0
