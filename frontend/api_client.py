@@ -17,10 +17,18 @@ class ApiError(RuntimeError):
 def embedded_client():
     """Load FastAPI inside Streamlit for a zero-configuration cloud demo."""
 
-    backend_root = Path(__file__).resolve().parents[1] / "backend"
+    repository_root = Path(__file__).resolve().parents[1]
+    candidates = (repository_root / "backend", repository_root)
+    backend_root = next(
+        (candidate for candidate in candidates if (candidate / "app" / "main.py").is_file()),
+        None,
+    )
+    if backend_root is None:
+        raise ApiError("找不到后端 app/main.py，请检查仓库目录结构")
     backend_path = str(backend_root)
-    if backend_path not in sys.path:
-        sys.path.insert(0, backend_path)
+    if backend_path in sys.path:
+        sys.path.remove(backend_path)
+    sys.path.insert(0, backend_path)
 
     from fastapi.testclient import TestClient
 
