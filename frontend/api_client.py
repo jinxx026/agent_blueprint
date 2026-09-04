@@ -83,3 +83,11 @@ class ApiClient:
 
     def delete(self, path: str) -> Any:
         return self.request("DELETE", path)
+
+    def upload_pdf(self, path: str, filename: str, content: bytes, data: dict[str, str]) -> Any:
+        return self.request(
+            "POST",
+            path,
+            files={"file": (filename, content, "application/pdf")},
+            data=data,
+        )

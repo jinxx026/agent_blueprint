@@ -3,7 +3,7 @@
 import streamlit as st
 from api_client import ApiClient, ApiError
 from streamlit.errors import StreamlitSecretNotFoundError
-from views import blueprints, dashboard, evaluations, knowledge, modules, security
+from views import blueprints, customer_service, dashboard, evaluations, knowledge, modules, security
 
 st.set_page_config(
     page_title="AgentBlueprint 企业 AI 控制台",
@@ -102,7 +102,7 @@ with st.sidebar:
     )
     page = st.radio(
         "功能",
-        ["总览", "业务模块", "知识库", "Blueprint", "评测发布", "身份安全"],
+        ["总览", "售后工作台", "业务模块", "知识库", "Blueprint", "评测发布", "身份安全"],
         label_visibility="collapsed",
     )
     st.divider()
@@ -131,6 +131,7 @@ with st.sidebar:
 
 pages = {
     "总览": dashboard.render,
+    "售后工作台": customer_service.render,
     "业务模块": modules.render,
     "知识库": knowledge.render,
     "Blueprint": blueprints.render,
